@@ -1,6 +1,6 @@
 // Components
 import React from "react";
-import UploadButton from "./components/upload-button";
+import UploadDropZone from "./components/upload-drop-zone";
 import Grid from "@material-ui/core/Grid";
 
 // Styling
@@ -13,7 +13,7 @@ const upload = () => (
     justify="center"
     alignItems="center"
   >
-    <UploadButton />
+    <UploadDropZone />
   </Grid>
 );
 
