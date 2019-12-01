@@ -1,0 +1,41 @@
+version: 2.1
+
+jobs:
+  build-deploy:
+    docker:
+      - image: bamdockerhub/apline-kube-terraform
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build Docker image
+          command: |
+            export TF_VAR_docker_image=bamdockerhub/vault-uploader
+            docker build -t $TF_VAR_docker_image .
+            docker login -u $DOCKER_NAME -p $DOCKER_PW
+            docker push $TF_VAR_docker_image
+      - run:
+          name: Terrafrom deploy
+          command: |
+            curl -X GET \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer ${DO_TOKEN}" \
+              "https://api.digitalocean.com/v2/kubernetes/clusters/${CLUSTER_ID}/kubeconfig" > config
+
+            export KUBECONFIG=/root/project/config
+
+            terraform init -backend-config="conn_str=$PG_URI"
+
+            terraform workspace select ipfs-platform-uploader
+            export IS_ALIVE=$(terraform taint module.go_api_deployment_vault_uploader.kubernetes_deployment.main)
+            echo $IS_ALIVE
+            terraform apply -auto-approve
+
+workflows:
+  version: 2
+  test-deploy:
+    jobs:
+      - build-deploy
+          # filters:
+          #   branches:
+          #     only: master
