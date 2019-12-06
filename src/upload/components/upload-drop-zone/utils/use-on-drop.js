@@ -1,5 +1,6 @@
 import React, { useCallback } from "react";
 import ipfsClient from "ipfs-http-client";
+import axios from "axios";
 const ipfs = ipfsClient({
   host: "ipfs.infura.io",
   port: "5001",
@@ -21,11 +22,15 @@ const useOnDrop = (setIsUploaded, setIsUploading, setIpfsHash) =>
           path: file.path,
           content: reader.result
         });
-        ipfs.add(reader.result, (err, result) => {
+        ipfs.add(reader.result, async (err, result) => {
           console.log(err, result);
           setIsUploading(false);
+          const resp = await axios.post("https://staging.chain-abstraction.dev/ipfs-media-platform/manager/add-vault", {ipfsHash:result[0].hash})
+          console.log(resp)
           setIpfsHash(result[0].hash);
         });
+
+        
       };
       console.log(file);
       reader.readAsArrayBuffer(file);
